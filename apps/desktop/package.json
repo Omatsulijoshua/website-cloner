@@ -1,0 +1,53 @@
+{
+    "name":  "@cloneforge/desktop",
+    "private":  true,
+    "version":  "0.1.0",
+    "description":  "CloneForge AI Windows desktop shell.",
+    "main":  "src/main.js",
+    "scripts":  {
+                    "dev":  "electron .",
+                    "pack":  "electron-builder --dir",
+                    "dist:win":  "electron-builder --win nsis"
+                },
+    "dependencies":  {
+
+                     },
+    "devDependencies":  {
+                            "7zip-bin":  "^5.2.0",
+                            "electron":  "31.7.7",
+                            "electron-builder":  "^24.13.3"
+                        },
+    "build":  {
+                  "appId":  "ai.cloneforge.desktop",
+                  "productName":  "CloneForge AI",
+                  "directories":  {
+                                      "output":  "dist"
+                                  },
+                  "files":  [
+                                "src/**/*",
+                                "package.json"
+                            ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "artifactName":  "CloneForge-AI-Setup-${version}.${ext}"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "CloneForge AI"
+                           },
+                  "electronVersion":  "31.7.7",
+                  "npmRebuild":  false,
+                  "nodeGypRebuild":  false
+              },
+    "author":  "CloneForge AI"
+}

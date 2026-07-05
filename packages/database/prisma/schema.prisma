@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CloneStatus {
+  DRAFT
+  CRAWLING
+  BUILDING
+  AI_FIXING
+  READY
+  DEPLOYED
+  FAILED
+  PAUSED_FOR_VERIFICATION
+}
+
+enum Plan {
+  FREE
+  PRO
+  AGENCY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYSTACK
+}
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String?
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  plan            Plan           @default(FREE)
+  disabledAt      DateTime?
+  projects        CloneProject[]
+  apiKeys         ApiKey[]
+  auditLogs       AuditLog[]
+  subscriptions   Subscription[]
+  usageEvents     UsageEvent[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  userId             String
+  plan               Plan
+  status             SubscriptionStatus @default(INCOMPLETE)
+  provider           PaymentProvider
+  providerCustomerId String?
+  providerSubId      String?            @unique
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean            @default(false)
+  user               User               @relation(fields: [userId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  quantity  Int      @default(1)
+  metadata  Json?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model ApiKey {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String
+  encryptedKey  String
+  lastFour      String?
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CloneProject {
+  id                   String        @id @default(cuid())
+  userId               String
+  name                 String
+  targetUrl            String
+  framework            String        @default("nextjs")
+  styling              String        @default("tailwind")
+  backendMode          String        @default("auto")
+  status               CloneStatus   @default(DRAFT)
+  permissionAcceptedAt DateTime?
+  githubUrl            String?
+  vercelUrl            String?
+  renderUrl            String?
+  backendPlan          Json?
+  user                 User          @relation(fields: [userId], references: [id])
+  pages                CapturedPage[]
+  prompts              PromptEdit[]
+  auditLogs            AuditLog[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model CapturedPage {
+  id             String       @id @default(cuid())
+  projectId      String
+  url            String
+  htmlHash       String?
+  screenshotPath String?
+  metadata       Json
+  detected       String[]
+  project        CloneProject @relation(fields: [projectId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+model PromptEdit {
+  id          String       @id @default(cuid())
+  projectId   String
+  prompt      String
+  commitSha   String?
+  diffSummary String?
+  project     CloneProject @relation(fields: [projectId], references: [id])
+  createdAt   DateTime     @default(now())
+}
+
+model AuditLog {
+  id        String        @id @default(cuid())
+  userId    String?
+  projectId String?
+  action    String
+  metadata  Json?
+  user      User?         @relation(fields: [userId], references: [id])
+  project   CloneProject? @relation(fields: [projectId], references: [id])
+  createdAt DateTime      @default(now())
+}
