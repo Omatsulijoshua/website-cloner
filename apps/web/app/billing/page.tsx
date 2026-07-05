@@ -1,11 +1,6 @@
 import { CheckCircle2, CreditCard, Crown, Gauge, ShieldCheck, Sparkles } from "lucide-react";
-import { subscriptionPlans } from "@cloneforge/config";
+import { paymentMethods, subscriptionPlans } from "@cloneforge/config";
 import { Button } from "@cloneforge/ui";
-
-const providerRows = [
-  ["Stripe", "Global cards, invoices, webhooks, customer portal"],
-  ["Paystack", "Africa-focused cards, bank transfer, mobile money, webhooks"]
-];
 
 export default function BillingPage() {
   return (
@@ -14,9 +9,9 @@ export default function BillingPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-gold">Subscriptions</p>
-            <h1 className="mt-2 text-4xl font-semibold md:text-6xl">Plans and billing</h1>
+            <h1 className="mt-2 text-4xl font-semibold md:text-6xl">Plans and payment</h1>
             <p className="mt-4 max-w-3xl text-paper/72">
-              Gate clone attempts, AI corrections, deployment automation, team seats, and support level without slowing down the creation workflow.
+              Choose a plan, pay with an admin-configured payment method, then wait for admin approval before cloning unlocks.
             </p>
           </div>
           <CreditCard size={34} className="text-gold" />
@@ -47,9 +42,7 @@ export default function BillingPage() {
                 </div>
               ))}
             </div>
-            <Button className="mt-6 w-full" icon={<CreditCard size={16} />}>
-              {plan.id === "free" ? "Start free" : "Choose plan"}
-            </Button>
+            <a href="/dashboard#subscription" className="mt-6 block"><Button className="w-full" icon={<CreditCard size={16} />}>Pay and request approval</Button></a>
           </div>
         ))}
       </section>
@@ -58,18 +51,13 @@ export default function BillingPage() {
         <div className="rounded-md bg-white p-5 shadow-soft">
           <div className="mb-4 flex items-center gap-3">
             <Gauge className="text-ember" />
-            <h2 className="text-2xl font-semibold">Usage controls</h2>
+            <h2 className="text-2xl font-semibold">Approval flow</h2>
           </div>
           <div className="grid gap-3">
-            {["Clone attempts", "AI corrections", "Deployment jobs", "Render backend builds"].map((item, index) => (
-              <div key={item} className="rounded-md border border-ink/10 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold">{item}</span>
-                  <span className="text-steel">{[68, 42, 24, 12][index]}% used</span>
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-paper">
-                  <div className="h-2 rounded-full bg-ember" style={{ width: `${[68, 42, 24, 12][index]}%` }} />
-                </div>
+            {["Pick a plan", "Pay through bank transfer or crypto", "Submit proof in dashboard", "Admin reviews payment", "Cloning unlocks after approval"].map((item, index) => (
+              <div key={item} className="flex items-center gap-3 rounded-md border border-ink/10 p-3">
+                <span className="grid h-8 w-8 place-items-center rounded-md bg-ink text-sm font-semibold text-paper">{index + 1}</span>
+                <span className="text-sm font-semibold">{item}</span>
               </div>
             ))}
           </div>
@@ -77,16 +65,17 @@ export default function BillingPage() {
         <div className="rounded-md bg-white p-5 shadow-soft">
           <div className="mb-4 flex items-center gap-3">
             <ShieldCheck className="text-moss" />
-            <h2 className="text-2xl font-semibold">Payment providers</h2>
+            <h2 className="text-2xl font-semibold">Payment methods</h2>
           </div>
           <div className="grid gap-3">
-            {providerRows.map(([provider, details]) => (
-              <div key={provider} className="flex items-center justify-between gap-4 rounded-md border border-ink/10 p-4">
-                <div>
-                  <p className="font-semibold">{provider}</p>
-                  <p className="mt-1 text-sm text-steel">{details}</p>
-                </div>
-                <span className="rounded-md bg-moss/12 px-2 py-1 text-xs font-semibold text-moss">Ready</span>
+            {paymentMethods.map((method) => (
+              <div key={method.id} className="rounded-md border border-ink/10 p-4">
+                <p className="font-semibold">{method.label}</p>
+                {method.type === "bank-transfer" ? (
+                  <p className="mt-2 text-sm text-steel">{method.bankName} - {method.accountNumber} - {method.accountName}</p>
+                ) : (
+                  <p className="mt-2 text-sm text-steel">{method.walletAddress} - {method.network}</p>
+                )}
               </div>
             ))}
           </div>

@@ -4,7 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { generateBackendPlan } from "@cloneforge/ai";
-import { subscriptionPlans } from "@cloneforge/config";
+import { paymentMethods, subscriptionPlans } from "@cloneforge/config";
 import { analyzeHtmlForFeatures, validateClonePermission } from "@cloneforge/crawler";
 
 const app = express();
@@ -60,6 +60,42 @@ app.get("/api/billing/plans", (_req, res) => {
   res.json({ plans: subscriptionPlans });
 });
 
+app.get("/api/billing/payment-methods", (_req, res) => {
+  res.json({ methods: paymentMethods });
+});
+
+app.patch("/api/admin/payment-methods/:id", (req, res) => {
+  const schema = z.object({
+    label: z.string().min(2).optional(),
+    bankName: z.string().min(2).optional(),
+    accountNumber: z.string().min(4).optional(),
+    accountName: z.string().min(2).optional(),
+    walletAddress: z.string().min(4).optional(),
+    network: z.string().min(2).optional(),
+    instructions: z.string().min(5).optional()
+  });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "Invalid payment method configuration" });
+
+  return res.json({
+    id: req.params.id,
+    updates: input.data,
+    audit: { action: "ADMIN_PAYMENT_METHOD_UPDATED", at: new Date().toISOString() }
+  });
+});
+
+app.post("/api/admin/subscriptions/:id/approve", (req, res) => {
+  const schema = z.object({ adminId: z.string().min(1), note: z.string().optional() });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "Admin id is required" });
+
+  return res.json({
+    subscriptionId: req.params.id,
+    status: "Approved",
+    approvedBy: input.data.adminId,
+    audit: { action: "ADMIN_SUBSCRIPTION_APPROVED", note: input.data.note, at: new Date().toISOString() }
+  });
+});
 app.post("/api/billing/checkout", (req, res) => {
   const schema = z.object({
     userId: z.string().min(1),
@@ -191,3 +227,4 @@ const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => {
   console.log(`CloneForge API listening on ${port}`);
 });
+

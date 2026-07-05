@@ -70,6 +70,28 @@ export function getSubscriptionPlan(planId: SubscriptionPlanId) {
   return subscriptionPlans.find((plan) => plan.id === planId);
 }
 
+export const paymentMethods = [
+  {
+    id: "opay-bank",
+    type: "bank-transfer",
+    label: "Bank transfer",
+    bankName: "Opay",
+    accountNumber: "8158075936",
+    accountName: "Joshua Toritseju Omatsuli",
+    instructions: "Send payment, then upload or paste proof of payment for admin approval."
+  },
+  {
+    id: "crypto-wallet",
+    type: "crypto",
+    label: "Crypto wallet",
+    walletAddress: "Configure wallet address in admin",
+    network: "Configure network in admin",
+    instructions: "Send crypto payment only to the admin-configured wallet and include transaction hash."
+  }
+] as const;
+
+export type PaymentMethodId = (typeof paymentMethods)[number]["id"];
+
 export const sensitiveDomainRules = [
   "bank",
   "paypal",
