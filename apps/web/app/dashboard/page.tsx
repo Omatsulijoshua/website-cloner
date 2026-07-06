@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   CheckCircle2,
   ClipboardCheck,
@@ -5,6 +8,7 @@ import {
   Home,
   KeyRound,
   LockKeyhole,
+  LogOut,
   Settings,
   ShieldCheck,
   Wand2
@@ -15,9 +19,56 @@ import { CloneProjectForm } from "../ui/clone-project-form";
 import { ProgressRail } from "../ui/progress-rail";
 import { ProjectTable } from "../ui/project-table";
 
-const subscriptionApproved = false;
+type DashboardUser = {
+  name?: string;
+  email: string;
+  subscriptionStatus?: "pending" | "approved" | "rejected";
+};
 
 export default function DashboardPage() {
+  const [user, setUser] = useState<DashboardUser | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const savedUser = window.localStorage.getItem("cloneforge_user");
+    if (!savedUser) {
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(savedUser) as DashboardUser;
+      if (!parsedUser.email) {
+        window.localStorage.removeItem("cloneforge_user");
+        window.location.href = "/login";
+        return;
+      }
+      setUser(parsedUser);
+      setCheckingSession(false);
+    } catch {
+      window.localStorage.removeItem("cloneforge_user");
+      window.location.href = "/login";
+    }
+  }, []);
+
+  function signOut() {
+    window.localStorage.removeItem("cloneforge_user");
+    window.location.href = "/login";
+  }
+
+  if (checkingSession || !user) {
+    return (
+      <main className="grid min-h-screen place-items-center px-5 py-10">
+        <div className="rounded-md bg-white p-6 text-center shadow-soft">
+          <Wand2 className="mx-auto text-ember" />
+          <p className="mt-4 font-semibold">Opening your dashboard...</p>
+        </div>
+      </main>
+    );
+  }
+
+  const subscriptionApproved = user.subscriptionStatus === "approved";
+
   return (
     <main className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="bg-ink p-5 text-paper lg:min-h-screen">
@@ -30,6 +81,11 @@ export default function DashboardPage() {
             <p className="text-xs text-paper/60">User dashboard</p>
           </div>
         </div>
+        <div className="mt-5 rounded-md border border-paper/12 bg-paper/6 p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-paper/50">Signed in</p>
+          <p className="mt-1 truncate text-sm font-semibold">{user.name || user.email}</p>
+          {user.name ? <p className="truncate text-xs text-paper/60">{user.email}</p> : null}
+        </div>
         <nav className="mt-8 grid gap-2">
           <a href="#home" className="flex items-center gap-3 rounded-md bg-paper/10 px-3 py-3 text-sm font-semibold"><Home size={17} /> Home</a>
           <a href="#configuration" className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold text-paper/72 hover:bg-paper/10"><Settings size={17} /> Configuration</a>
@@ -40,6 +96,7 @@ export default function DashboardPage() {
           <p className="mt-2 inline-flex rounded-md bg-gold/15 px-2 py-1 text-xs font-semibold text-gold">Pending admin approval</p>
           <p className="mt-3 text-xs leading-5 text-paper/62">Cloning unlocks only after admin approves your payment.</p>
         </div>
+        <Button type="button" variant="secondary" className="mt-5 w-full" icon={<LogOut size={16} />} onClick={signOut}>Sign out</Button>
       </aside>
 
       <section className="px-5 py-6">
@@ -146,3 +203,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+
