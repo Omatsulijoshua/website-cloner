@@ -13,3 +13,6 @@ generated
 run-logs
 apps/desktop/installer
 *.tsbuildinfo
+.vercel
+apps/*/.vercel
+apps/*/.next

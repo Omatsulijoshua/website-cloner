@@ -1,0 +1,13 @@
+node_modules
+.git
+.next
+.turbo
+run-logs
+apps/*/.next
+apps/*/.vercel
+apps/desktop/dist
+apps/desktop/installer
+*.tsbuildinfo
+.env
+.env.*
+!.env.example

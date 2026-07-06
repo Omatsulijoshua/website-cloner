@@ -4,8 +4,9 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { generateBackendPlan } from "@cloneforge/ai";
+import { createAutoDeployPlan } from "@cloneforge/deployment";
 import { paymentMethods, subscriptionPlans } from "@cloneforge/config";
-import { analyzeHtmlForFeatures, validateClonePermission } from "@cloneforge/crawler";
+import { analyzeHtmlForFeatures, buildAssetPipelinePlan, createVisualAnalysisFromDomSnapshot, validateClonePermission } from "@cloneforge/crawler";
 
 const app = express();
 
@@ -187,6 +188,48 @@ app.post("/api/projects", (req, res) => {
   return res.status(201).json(project);
 });
 
+app.post("/api/projects/:id/assets/plan", (req, res) => {
+  const schema = z.object({ url: z.string().url(), html: z.string().min(1) });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "URL and HTML are required" });
+
+  const assetPlan = buildAssetPipelinePlan([
+    {
+      url: input.data.url,
+      html: input.data.html,
+      metadata: createVisualAnalysisFromDomSnapshot({}),
+      features: []
+    }
+  ]);
+
+  return res.json({ projectId: req.params.id, assetPlan });
+});
+
+app.post("/api/projects/:id/deployments/auto", (req, res) => {
+  const schema = z.object({
+    projectName: z.string().min(2),
+    github: z.object({
+      owner: z.string().min(1),
+      repo: z.string().min(1),
+      branch: z.string().optional(),
+      tokenConfigured: z.boolean().default(false)
+    }),
+    vercel: z.object({
+      projectName: z.string().min(1),
+      teamSlug: z.string().optional(),
+      tokenConfigured: z.boolean().default(false)
+    }),
+    render: z.object({
+      serviceName: z.string().min(1),
+      tokenConfigured: z.boolean().default(false),
+      includeBackend: z.boolean().default(false)
+    }).optional()
+  });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "Invalid auto-deploy request", issues: input.error.flatten() });
+
+  return res.json(createAutoDeployPlan({ projectId: req.params.id, ...input.data }));
+});
 app.post("/api/projects/:id/analyze-html", (req, res) => {
   const schema = z.object({ html: z.string().min(1) });
   const input = schema.safeParse(req.body);
@@ -227,4 +270,6 @@ const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => {
   console.log(`CloneForge API listening on ${port}`);
 });
+
+
 
