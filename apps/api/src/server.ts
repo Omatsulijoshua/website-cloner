@@ -28,22 +28,15 @@ const createProjectSchema = z.object({
 const generatedProjects = new Map<string, unknown>();
 
 const adminSnapshot = {
-  users: [
-    { id: "usr_001", email: "owner@cloneforge.ai", name: "Owner", plan: "Agency", status: "Active", aiUsage: 1840 },
-    { id: "usr_002", email: "studio@example.com", name: "Studio Ops", plan: "Pro", status: "Active", aiUsage: 392 },
-    { id: "usr_003", email: "risk@example.com", name: "Review Queue", plan: "Free", status: "Limited", aiUsage: 42 }
-  ],
-  projects: [
-    { id: "prj_001", name: "Acme Marketing", status: "Building", owner: "studio@example.com", risk: "Clear" },
-    { id: "prj_002", name: "Nova Booking", status: "Paused For Verification", owner: "owner@cloneforge.ai", risk: "Manual verification" },
-    { id: "prj_003", name: "Blocked Portal", status: "Failed", owner: "risk@example.com", risk: "Sensitive domain" }
-  ],
+  users: [],
+  projects: [],
+  subscriptionApprovals: [],
   usage: {
-    cloneAttempts: 128,
-    aiCorrections: 2234,
-    deploys: 46,
-    failedJobs: 7,
-    manualVerifications: 12
+    cloneAttempts: 0,
+    aiCorrections: 0,
+    deploys: 0,
+    failedJobs: 0,
+    manualVerifications: 0
   },
   limits: {
     freeCloneAttempts: 3,
@@ -53,6 +46,27 @@ const adminSnapshot = {
   }
 };
 
+app.post("/api/auth/signup", (req, res) => {
+  const schema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(8) });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "Invalid signup request", issues: input.error.flatten() });
+
+  return res.status(201).json({
+    user: { id: `user_${Date.now()}`, name: input.data.name, email: input.data.email, subscriptionStatus: "pending" },
+    message: "Account created. Subscription approval is required before cloning unlocks."
+  });
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const schema = z.object({ email: z.string().email(), password: z.string().min(1) });
+  const input = schema.safeParse(req.body);
+  if (!input.success) return res.status(422).json({ error: "Invalid login request" });
+
+  return res.json({
+    user: { id: `user_${Date.now()}`, email: input.data.email, subscriptionStatus: "pending" },
+    message: "Logged in. Subscription approval is required before cloning unlocks."
+  });
+});
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "cloneforge-api" });
 });
@@ -270,6 +284,7 @@ const port = Number(process.env.PORT ?? 4000);
 app.listen(port, () => {
   console.log(`CloneForge API listening on ${port}`);
 });
+
 
 
 
