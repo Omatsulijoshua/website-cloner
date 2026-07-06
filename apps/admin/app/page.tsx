@@ -17,6 +17,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { paymentMethods } from "@cloneforge/config";
 import { Button } from "@cloneforge/ui";
+import { SignOutButton } from "./sign-out-button";
 
 const metrics: Array<[string, string, string, LucideIcon]> = [
   ["Users", "0", "No accounts yet", Users],
@@ -52,7 +53,10 @@ export default function AdminPage() {
               Approve subscriptions, configure payment methods, manage users, review clone activity, and control platform limits.
             </p>
           </div>
-          <ShieldAlert size={36} className="text-gold" />
+          <div className="flex items-center gap-3">
+            <SignOutButton />
+            <ShieldAlert size={36} className="text-gold" />
+          </div>
         </div>
       </section>
 
@@ -158,3 +162,5 @@ export default function AdminPage() {
     </main>
   );
 }
+
+
